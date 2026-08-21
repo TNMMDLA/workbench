@@ -1,0 +1,36 @@
+panel-jp.cnmbwcnmb.ccwu.cc {
+  encode zstd gzip
+
+  handle /api/* {
+    reverse_proxy proxyhub-server:3000
+  }
+
+  handle /sub/* {
+    reverse_proxy proxyhub-server:3000
+  }
+
+  handle {
+    reverse_proxy proxyhub-web:80
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    -Server
+  }
+}
+
+work.cnmbwcnmb.ccwu.cc {
+  encode zstd gzip
+
+  # AQ 的工作台（Flask 跑在宿主机 5000 端口，经 docker 网关 172.18.0.1 反代）
+  reverse_proxy 172.18.0.1:5000
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    -Server
+  }
+}

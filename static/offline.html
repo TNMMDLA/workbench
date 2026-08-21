@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>离线 · AQ 工作台</title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: #0f1115;
+      color: #e8eaed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .box { text-align: center; padding: 30px; }
+    .icon { font-size: 64px; }
+    h1 { font-size: 20px; margin: 16px 0 8px; }
+    p { color: #8a93a6; font-size: 14px; margin: 0 0 24px; }
+    button {
+      background: #6366f1;
+      border: none;
+      color: #fff;
+      border-radius: 999px;
+      padding: 10px 26px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">📴</div>
+    <h1>当前处于离线模式</h1>
+    <p>你正在查看最近缓存的数据。<br/>网络恢复后会自动刷新。</p>
+    <button onclick="location.reload()">重新加载</button>
+  </div>
+</body>
+</html>

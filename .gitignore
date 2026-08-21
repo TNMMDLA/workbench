@@ -1,0 +1,15 @@
+# ===== 个人数据（绝不上传 GitHub）=====
+data.db
+*.db
+*.db.bak*
+
+# 上传的文件（用户的私人文件）
+uploads/
+
+# ===== Python 缓存 =====
+__pycache__/
+*.pyc
+
+# ===== 系统杂项 =====
+.DS_Store
+Thumbs.db

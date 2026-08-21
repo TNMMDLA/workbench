@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-accent="indigo">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1115" />
+  <title>AQ 的工作台</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="/static/icons/icon-32.png" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ===== 应用导航栏 ===== -->
+  <nav class="app-nav">
+    <a class="logo" href="#/">AQ<span>WORKBENCH</span></a>
+    <div class="nav-links" id="nav-links">
+      <a href="#/" data-page="dashboard" class="active">工作台</a>
+      <a href="#/calendar" data-page="calendar">日历</a>
+      <a href="#/files" data-page="files">文件</a>
+      <a href="#/notifications" data-page="notifications">通知</a>
+      <a href="#/settings" data-page="settings">设置</a>
+    </div>
+    <div class="nav-right">
+      <span class="net-status" id="net-status">● 在线</span>
+      <button class="install-btn" id="install-btn" type="button" style="display:none">📲 安装</button>
+      <button class="bell" id="bell-btn" type="button" title="通知">🔔<span class="bell-count" id="bell-count" style="display:none">0</span></button>
+    </div>
+  </nav>
+
+  <!-- ===== 页面容器（hash 路由切换） ===== -->
+  <div id="app-root">
+
+    <!-- ========== 页面：工作台 ========== -->
+    <div class="page page-dashboard" id="page-dashboard">
+
+      <!-- 顶部条：问候 + 日期/时间 + 主题切换 -->
+      <header class="topbar">
+        <div class="hello">
+          <span id="hello-text">晚上好，AQ</span>
+          <span class="date-line" id="date-line">8月6日 · 周四 · 第 32 周</span>
+        </div>
+        <div class="top-right">
+          <span class="top-time" id="clock">--:--</span>
+          <button id="theme-toggle" class="theme-btn" type="button">☀️ 浅色</button>
+        </div>
+      </header>
+
+      <!-- 概览卡片（今日日程 / 最近文件 / 未读通知） -->
+      <div class="overview-cards">
+        <section class="card overview-card">
+          <h2>今日日程 <span class="tag">日历</span></h2>
+          <div id="overview-today" class="overview-body">暂无日程</div>
+          <a class="overview-more" href="#/calendar">查看全部 →</a>
+        </section>
+        <section class="card overview-card">
+          <h2>最近文件 <span class="tag">文件</span></h2>
+          <div id="overview-files" class="overview-body">暂无文件</div>
+          <a class="overview-more" href="#/files">查看全部 →</a>
+        </section>
+        <section class="card overview-card">
+          <h2>未读通知 <span class="tag">通知</span></h2>
+          <div id="overview-notifications" class="overview-body">暂无通知</div>
+          <a class="overview-more" href="#/notifications">查看全部 →</a>
+        </section>
+      </div>
+
+      <!-- 三列布局 -->
+      <main class="cols">
+
+        <!-- ===== 左列：今日进度 + 待办 ===== -->
+        <div class="col">
+          <section class="card">
+            <h2>今日进度 <span class="tag" id="progress-label">已完成 0/0</span></h2>
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>待办事项 <span class="tag" id="todo-count-label"></span></h2>
+            <div id="todo-list" class="todo-list"></div>
+            <div id="archive-block" class="archive-block">
+              <button type="button" id="archive-toggle" class="archive-toggle">🗂 本月已完成 (<span id="archive-count">0</span>)</button>
+              <div id="archive-list" class="archive-list"></div>
+            </div>
+            <form id="todo-form" class="add-bar">
+              <input id="todo-text" type="text" placeholder="添加一次性待办…" autocomplete="off" />
+              <button type="submit">＋</button>
+            </form>
+          </section>
+        </div>
+
+        <!-- ===== 中列：每日习惯 + 番茄钟 ===== -->
+        <div class="col">
+          <section class="card">
+            <h2>每日习惯 <span class="tag" id="habit-count-label"></span></h2>
+            <div class="range-switch" id="range-switch">
+              <button class="range-btn active" data-range="7">最近 7 天</button>
+              <button class="range-btn" data-range="30">最近 30 天</button>
+              <button class="range-btn" data-range="year">最近 12 个月</button>
+            </div>
+            <div id="habit-board" class="habit-board"></div>
+            <form id="habit-form" class="add-bar">
+              <input id="habit-text" type="text" placeholder="添加每日习惯，如：📖 每天学英语" autocomplete="off" />
+              <button type="submit">＋</button>
+            </form>
+          </section>
+
+          <section class="card">
+            <h2>专注计时 <span class="tag">番茄钟</span></h2>
+            <div class="pomodoro">
+              <div class="timer" id="timer-display">25:00</div>
+              <div class="pomo-btns">
+                <button id="pomo-start" class="pbtn main" type="button">开始</button>
+                <button id="pomo-pause" class="pbtn" type="button" disabled>暂停</button>
+                <button id="pomo-reset" class="pbtn" type="button">重置</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ===== 右列：灵感便签 ===== -->
+        <div class="col">
+          <section class="card">
+            <h2>灵感便签</h2>
+            <textarea id="note" class="note-box" placeholder="随手记点什么……"></textarea>
+            <div class="note-hint"><span id="note-status"></span>ⓘ 自动保存 · 存在服务器上</div>
+          </section>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- ========== 页面：日历 ========== -->
+    <div class="page page-calendar" id="page-calendar">
+      <div class="cal-wrap">
+        <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button class="cal-btn" id="cal-prev" type="button">‹</button>
+            <button class="cal-btn" id="cal-today" type="button">今天</button>
+            <button class="cal-btn" id="cal-next" type="button">›</button>
+            <span class="cal-title" id="cal-title">2026年8月</span>
+          </div>
+          <div class="cal-views">
+            <button class="cal-view-btn active" data-view="month" type="button">月</button>
+            <button class="cal-view-btn" data-view="week" type="button">周</button>
+            <button class="cal-view-btn" data-view="day" type="button">今日</button>
+            <button class="cal-view-btn" data-view="list" type="button">日程</button>
+          </div>
+          <div class="cal-tool-right">
+            <select id="cal-filter" class="cal-filter">
+              <option value="all">全部日历</option>
+              <option value="local">本地事件</option>
+            </select>
+            <button class="cal-add" id="cal-done-toggle" type="button">✅ 已完成</button>
+            <button class="cal-add" id="cal-sources-btn" type="button">📡 订阅日历</button>
+            <button class="cal-add" id="cal-add" type="button">＋ 新建事件</button>
+          </div>
+        </div>
+        <div class="workday-bar">
+          <span class="workday-label">🗓 大小周排班</span>
+          <button type="button" id="wk-big" class="wk-btn">本周大周 · 休周日</button>
+          <button type="button" id="wk-small" class="wk-btn">本周小周 · 休周六日</button>
+          <span id="wk-status" class="wk-status"></span>
+        </div>
+        <div id="cal-view"></div>
+      </div>
+    </div>
+
+    <!-- 事件编辑模态框 -->
+    <div class="modal-mask" id="event-modal" style="display:none">
+      <div class="modal">
+        <h3 id="event-modal-title">新建事件</h3>
+        <form id="event-form">
+          <input id="ev-title" type="text" placeholder="事件标题 *" />
+          <div class="ev-row">
+            <label>开始 <input id="ev-start" type="datetime-local" /></label>
+            <label>结束 <input id="ev-end" type="datetime-local" /></label>
+          </div>
+          <label class="ev-check"><input id="ev-allday" type="checkbox" /> 全天事件</label>
+          <input id="ev-location" type="text" placeholder="地点" />
+          <textarea id="ev-desc" placeholder="备注"></textarea>
+          <div class="ev-color-row">
+            <span>颜色</span>
+            <span class="ev-palette" id="ev-palette">
+              <i data-c="#6366f1"></i><i data-c="#34d399"></i><i data-c="#f59e0b"></i>
+              <i data-c="#ef4444"></i><i data-c="#ec4899"></i><i data-c="#22d3ee"></i>
+            </span>
+          </div>
+          <label class="ev-select">提醒
+            <select id="ev-remind">
+              <option value="none">不提醒</option>
+              <option value="start">开始时提醒</option>
+              <option value="10m">提前 10 分钟</option>
+              <option value="30m">提前 30 分钟</option>
+              <option value="1h">提前 1 小时</option>
+              <option value="1d">提前 1 天</option>
+            </select>
+          </label>
+          <div class="modal-btns">
+            <button type="button" class="btn-danger" id="ev-delete" style="display:none">删除</button>
+            <span class="spacer"></span>
+            <button type="button" class="btn-plain" id="ev-cancel">取消</button>
+            <button type="submit" class="btn-primary">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 事件详情浮层 -->
+    <div class="modal-mask" id="event-detail" style="display:none">
+      <div class="modal">
+        <h3 id="ed-title"></h3>
+        <div id="ed-body" class="ed-body"></div>
+        <div class="modal-btns">
+          <button type="button" class="btn-plain" id="ed-close">关闭</button>
+          <button type="button" class="btn-primary" id="ed-edit">编辑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 当日详情浮层 -->
+    <div class="modal-mask" id="day-modal" style="display:none">
+      <div class="modal day-modal">
+        <div class="day-modal-head">
+          <h3 id="day-modal-title">当日详情</h3>
+          <button type="button" class="btn-plain" id="day-modal-close">✕</button>
+        </div>
+        <div id="day-done-section" class="day-done-section" style="display:none">
+          <h4>✅ 当天完成</h4>
+          <div id="day-done-list" class="day-done-list"></div>
+        </div>
+        <div class="day-events-section">
+          <h4>📅 当天事件</h4>
+          <div id="day-events-list" class="day-events-list"></div>
+        </div>
+        <div class="day-modal-foot">
+          <button type="button" class="cal-add" id="day-new-event" style="display:none">＋ 在此日期新建事件</button>
+          <p class="day-past-hint" id="day-past-hint" style="display:none">⏳ 过去的日期仅可回看，不能新建事件</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日历订阅管理模态框 -->
+    <div class="modal-mask" id="sources-modal" style="display:none">
+      <div class="modal modal-wide">
+        <h3>📡 日历订阅</h3>
+        <div id="sources-list" class="sources-list"></div>
+
+        <div class="sources-add">
+          <div class="sources-tabs">
+            <button class="src-tab active" data-tab="url" type="button">订阅链接</button>
+            <button class="src-tab" data-tab="file" type="button">上传 .ics</button>
+          </div>
+          <form id="src-url-form" class="src-form">
+            <input id="src-url" type="text" placeholder="https://example.com/calendar.ics" />
+            <div class="src-row">
+              <input id="src-url-name" type="text" placeholder="日历名称（可选）" />
+              <span class="ev-palette" id="src-palette">
+                <i data-c="#6366f1"></i><i data-c="#34d399"></i><i data-c="#f59e0b"></i>
+                <i data-c="#ef4444"></i><i data-c="#ec4899"></i><i data-c="#22d3ee"></i>
+              </span>
+              <button type="submit" class="btn-primary">添加并同步</button>
+            </div>
+          </form>
+          <form id="src-file-form" class="src-form" style="display:none">
+            <input id="src-file" type="file" accept=".ics" />
+            <div class="src-row">
+              <input id="src-file-name" type="text" placeholder="日历名称（可选）" />
+              <button type="submit" class="btn-primary">上传并同步</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-btns">
+          <button type="button" class="btn-plain" id="src-sync-all">🔄 同步全部</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn-plain" id="src-close">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 页面：文件 ========== -->
+    <div class="page page-files" id="page-files">
+      <div class="files-wrap">
+        <div class="files-toolbar">
+          <h1>📁 文件暂存</h1>
+          <div class="files-tools">
+            <input id="file-search" type="text" placeholder="搜索文件名…" />
+            <select id="file-type">
+              <option value="">全部类型</option>
+              <option value="image">图片</option>
+              <option value="video">视频</option>
+              <option value="audio">音频</option>
+              <option value="text">文本</option>
+              <option value="application">文档/压缩包</option>
+            </select>
+            <select id="file-sort">
+              <option value="new">最新上传</option>
+              <option value="old">最早上传</option>
+              <option value="expiring">快到期</option>
+              <option value="size">文件最大</option>
+            </select>
+            <button class="btn-danger small" id="file-batch-del" type="button">批量删除</button>
+          </div>
+        </div>
+
+        <!-- 上传区 -->
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" multiple hidden />
+          <div class="drop-inner">
+            <div class="drop-icon">📤</div>
+            <p><b>点击选择</b> 或 <b>拖拽文件</b> 到此处</p>
+            <p class="drop-hint">支持多文件 · 单文件 ≤ 500MB · 自动随机重命名存储</p>
+            <div class="drop-opts">
+              <input id="file-note" type="text" placeholder="备注（可选）" />
+              <input id="file-tags" type="text" placeholder="标签（逗号分隔，可选）" />
+              <select id="file-expire">
+                <option value="never">永不过期</option>
+                <option value="1h">1 小时后过期</option>
+                <option value="1d">1 天后过期</option>
+                <option value="7d">7 天后过期</option>
+                <option value="30d">30 天后过期</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="upload-progress"></div>
+
+        <!-- 统计条 -->
+        <div class="files-stats" id="files-stats"></div>
+
+        <!-- 文件列表 -->
+        <div id="files-list" class="files-list"></div>
+      </div>
+    </div>
+
+    <!-- 文件编辑弹窗 -->
+    <div class="modal-mask" id="file-edit-modal" style="display:none">
+      <div class="modal">
+        <h3>编辑文件</h3>
+        <p id="fe-name" class="fe-name"></p>
+        <input id="fe-note" type="text" placeholder="备注" />
+        <input id="fe-tags" type="text" placeholder="标签（逗号分隔）" />
+        <label class="ev-select">过期时间
+          <select id="fe-expire">
+            <option value="">永不过期</option>
+            <option value="1h">1 小时后</option>
+            <option value="1d">1 天后</option>
+            <option value="7d">7 天后</option>
+            <option value="30d">30 天后</option>
+          </select>
+        </label>
+        <div class="modal-btns">
+          <button type="button" class="btn-plain" id="fe-cancel">取消</button>
+          <button type="button" class="btn-primary" id="fe-save">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分享弹窗 -->
+    <div class="modal-mask" id="share-modal" style="display:none">
+      <div class="modal">
+        <h3>🔗 创建分享链接</h3>
+        <p id="share-file-name" class="fe-name"></p>
+        <label class="ev-select">有效期
+          <select id="share-hours">
+            <option value="1">1 小时</option>
+            <option value="24" selected>24 小时</option>
+            <option value="168">7 天</option>
+            <option value="720">30 天</option>
+          </select>
+        </label>
+        <label class="ev-select">下载次数上限
+          <select id="share-max">
+            <option value="-1" selected>不限次数</option>
+            <option value="1">1 次</option>
+            <option value="3">3 次</option>
+            <option value="10">10 次</option>
+          </select>
+        </label>
+        <div class="share-list" id="share-list"></div>
+        <div class="share-result" id="share-result"></div>
+        <div class="modal-btns">
+          <button type="button" class="btn-plain" id="share-cancel">关闭</button>
+          <button type="button" class="btn-primary" id="share-create">生成链接</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 页面：通知 ========== -->
+    <div class="page page-notifications" id="page-notifications">
+      <div class="notif-wrap">
+        <div class="notif-toolbar">
+          <h1>🔔 通知中心</h1>
+          <div class="notif-tools">
+            <label class="notif-check"><input type="checkbox" id="notif-unread-only" /> 只看未读</label>
+            <select id="notif-source">
+              <option value="">全部来源</option>
+              <option value="calendar">日历</option>
+              <option value="files">文件</option>
+              <option value="system">系统</option>
+            </select>
+            <select id="notif-level">
+              <option value="">全部等级</option>
+              <option value="info">信息</option>
+              <option value="success">成功</option>
+              <option value="warning">警告</option>
+              <option value="error">错误</option>
+            </select>
+            <button class="btn-plain small" id="notif-read-all" type="button">全部已读</button>
+            <button class="btn-plain small" id="notif-clear-read" type="button">清空已读</button>
+          </div>
+        </div>
+        <div id="notif-list" class="notif-list"></div>
+      </div>
+    </div>
+
+    <!-- ========== 页面：设置 ========== -->
+    <div class="page page-settings" id="page-settings">
+      <div class="settings-wrap">
+        <h1 class="settings-title">⚙️ 设置</h1>
+
+        <div class="card">
+          <h2>🎨 主题色</h2>
+          <p class="setting-sub">选择一个你喜欢的强调色，会应用到按钮、进度条、高亮等所有地方。</p>
+          <div class="accent-picker" id="accent-picker">
+            <button type="button" data-accent="indigo" class="accent-dot" style="--dot:#6366f1" title="靛蓝"></button>
+            <button type="button" data-accent="cyan" class="accent-dot" style="--dot:#06b6d4" title="青色"></button>
+            <button type="button" data-accent="violet" class="accent-dot" style="--dot:#8b5cf6" title="紫色"></button>
+            <button type="button" data-accent="emerald" class="accent-dot" style="--dot:#10b981" title="翡翠绿"></button>
+            <button type="button" data-accent="rose" class="accent-dot" style="--dot:#f43f5e" title="玫红"></button>
+            <button type="button" data-accent="amber" class="accent-dot" style="--dot:#f59e0b" title="琥珀"></button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🗄️ 数据保留期</h2>
+          <p class="setting-sub">超过保留期的数据会自动清理，未完成任务每月自动顺延不丢失。</p>
+
+          <div class="setting-row">
+            <span class="setting-name">📋 已完成任务在日历中保留</span>
+            <select id="retention-select" class="setting-select" data-key="done_retention_months">
+              <option value="1">1 个月</option>
+              <option value="2">2 个月</option>
+              <option value="3">3 个月</option>
+              <option value="6">6 个月</option>
+              <option value="12">12 个月</option>
+              <option value="24">24 个月</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <span class="setting-name">🔁 打卡记录保留</span>
+            <select id="habit-retention-select" class="setting-select" data-key="habit_log_retention_months">
+              <option value="1">1 个月</option>
+              <option value="3">3 个月</option>
+              <option value="6">6 个月</option>
+              <option value="12">12 个月</option>
+              <option value="24">24 个月</option>
+              <option value="60">60 个月</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <span class="setting-name">🔔 通知记录保留</span>
+            <select id="notif-retention-select" class="setting-select" data-key="notification_retention_months">
+              <option value="1">1 个月</option>
+              <option value="2">2 个月</option>
+              <option value="3">3 个月</option>
+              <option value="6">6 个月</option>
+              <option value="12">12 个月</option>
+            </select>
+          </div>
+          <p class="settings-save-hint" id="settings-save-hint"></p>
+        </div>
+
+        <div class="card">
+          <h2>💾 存储占用</h2>
+          <div class="storage-total">
+            <span class="storage-big" id="storage-total">计算中…</span>
+            <span class="storage-sub" id="storage-detail"></span>
+          </div>
+          <div class="storage-list" id="storage-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 通知浮层（阶段 6 完善） -->
+  <div class="bell-popup" id="bell-popup" style="display:none">
+    <div class="bell-popup-head">
+      <b>通知</b>
+      <a href="#/notifications">查看全部</a>
+    </div>
+    <div id="bell-popup-body" class="bell-popup-body">暂无通知</div>
+  </div>
+
+  <!-- 更新提示横幅 -->
+  <div class="update-bar" id="update-bar" style="display:none">
+    <span>✨ 新版本可用</span>
+    <button id="update-now">立即更新</button>
+    <button id="update-later">稍后</button>
+  </div>
+
+  <!-- 离线横幅 -->
+  <div class="offline-bar" id="offline-bar" style="display:none">当前处于离线模式，显示的是最近缓存的数据。</div>
+
+  <script src="/static/calendar.js"></script>
+  <script src="/static/files.js"></script>
+  <script src="/static/notifications.js"></script>
+  <script src="/static/script.js"></script>
+</body>
+</html>

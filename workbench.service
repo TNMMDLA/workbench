@@ -1,0 +1,13 @@
+[Unit]
+Description=AQ Workbench (Flask)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/workbench
+ExecStart=/opt/workbench/venv/bin/python app.py
+Restart=always
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
